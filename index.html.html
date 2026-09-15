@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPI Informatika — Himpunan dan Sistem Bilangan | SMP Negeri 1 Lamongan</title>
+<style>
+/* ============ DASAR ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden}
+body{
+  font-family:"Trebuchet MS","Segoe UI",Verdana,sans-serif;
+  background:#f0f9ff;
+  background:url('bg-ruang-kelas.jpg') center/cover no-repeat fixed;
+  position:relative;
+}
+#bg-overlay{position:fixed;inset:0;background:rgba(240,249,255,0.82);z-index:0;pointer-events:none}
+
+#stage-wrap{position:relative;z-index:1;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#stage-16-9{
+  background:transparent;border:none;box-shadow:none;border-radius:0;
+  aspect-ratio:16/9;overflow:hidden;
+  width:min(100vw, calc(100vh * 16 / 9));
+  height:min(100vh, calc(100vw * 9 / 16));
+  font-size:calc(15px * var(--font-scale, 1.0));
+  position:relative;
+  color:#0f2b46;
+}
+
+:root{
+  --biru:#0284c7; --biru-tua:#075985; --ungu:#7c3aed; --hijau:#059669;
+  --oranye:#f59e0b; --pink:#db2777; --merah:#dc2626;
+  --kartu:rgba(255,255,255,0.93);
+  --pad:clamp(10px,1.8vh,18px);
+}
+
+/* ============ HALAMAN ============ */
+.page{display:none;width:100%;height:100%;flex-direction:column;padding:var(--pad);overflow:hidden}
+.page.active{display:flex;animation:masuk .35s ease}
+@keyframes masuk{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ============ NAVIGASI ATAS ============ */
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:clamp(6px,1.2vh,12px);flex:0 0 auto}
+.judul-halaman{
+  font-size:clamp(16px,2.2vh,22px);font-weight:900;color:#fff;
+  background:linear-gradient(135deg,var(--biru),var(--ungu));
+  padding:8px 22px;border-radius:999px;box-shadow:0 5px 14px rgba(2,132,199,.35);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.nav-kanan{margin-left:auto;display:flex;align-items:center;gap:8px}
+.ikon-bulat{
+  width:clamp(40px,5.2vh,48px);height:clamp(40px,5.2vh,48px);border-radius:50%;
+  font-size:clamp(18px,2.3vh,23px);border:none;cursor:pointer;
+  background:#fff;color:var(--biru-tua);font-weight:900;
+  box-shadow:0 4px 10px rgba(7,89,133,.25);
+  display:flex;align-items:center;justify-content:center;transition:transform .15s,background .15s;
+}
+.ikon-bulat:hover{transform:translateY(-3px) scale(1.06);background:#e0f2fe}
+.ikon-bulat:focus-visible{outline:3px solid var(--oranye);outline-offset:2px}
+.ikon-bulat.aktif{background:linear-gradient(135deg,var(--hijau),#34d399);color:#fff}
+
+/* ============ SAMPUL ============ */
+#hal-sampul{justify-content:space-between;align-items:center;text-align:center}
+.kapsul-instansi{
+  display:flex;align-items:center;gap:clamp(10px,1.6vw,18px);
+  background:rgba(255,255,255,.94);border-radius:999px;
+  padding:clamp(6px,1vh,10px) clamp(16px,2vw,26px);
+  box-shadow:0 6px 18px rgba(7,89,133,.22);border:2px solid rgba(2,132,199,.25);
+}
+.kapsul-instansi img{height:clamp(50px,6.8vh,68px);width:auto;filter:drop-shadow(0 3px 5px rgba(0,0,0,.2))}
+.instansi-teks{text-align:left;line-height:1.25}
+.instansi-teks .sekolah{font-size:clamp(13px,1.9vh,18px);font-weight:900;color:var(--biru-tua)}
+.instansi-teks .dinas{font-size:clamp(10px,1.35vh,13px);font-weight:700;color:#475569}
+.badge-baris{display:flex;gap:6px;margin-top:4px}
+.badge{font-size:clamp(9px,1.2vh,11.5px);font-weight:800;padding:3px 10px;border-radius:999px;color:#fff}
+.b-merdeka{background:linear-gradient(135deg,var(--hijau),#34d399)}
+.b-fase{background:linear-gradient(135deg,var(--oranye),#fbbf24)}
+.b-mapel{background:linear-gradient(135deg,var(--pink),#f472b6)}
+
+.sampul-tengah{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(6px,1.2vh,14px);flex:1}
+.judul-sampul{
+  font-size:clamp(2.8rem,6.8vw,5.2rem);font-weight:900;line-height:1.02;
+  background:linear-gradient(180deg,#0ea5e9,#1d4ed8 55%,#6d28d9);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 5px 0 rgba(255,255,255,.95), 0 8px 16px rgba(29,78,216,.28);
+  letter-spacing:-1px;
+}
+.sub-sampul{font-size:clamp(1.4rem,3.2vw,2.6rem);font-weight:800;color:#0f2b46;text-shadow:0 3px 0 #fff}
+.chip-materi{font-size:clamp(12px,1.7vh,16px);font-weight:800;color:var(--biru-tua);background:rgba(255,255,255,.9);padding:6px 18px;border-radius:999px;border:2px dashed rgba(2,132,199,.5)}
+
+.tombol-mulai{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:clamp(2px,.8vh,8px)}
+.lingkaran-play{
+  width:clamp(60px,8.5vh,80px);height:clamp(60px,8.5vh,80px);border-radius:50%;
+  background:linear-gradient(135deg,#f97316,#ef4444);color:#fff;
+  font-size:clamp(26px,3.6vh,36px);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 0 rgba(249,115,22,.75);animation:pendar 1.8s infinite;
+}
+@keyframes pendar{0%{box-shadow:0 0 0 0 rgba(249,115,22,.7)}70%{box-shadow:0 0 0 26px rgba(249,115,22,0)}100%{box-shadow:0 0 0 0 rgba(249,115,22,0)}}
+.teks-mulai{font-size:clamp(24px,3.8vh,36px);font-weight:900;color:#c2410c;text-shadow:0 3px 0 #fff}
+
+.footer-sampul{
+  display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.9);
+  padding:8px 22px;border-radius:999px;box-shadow:0 5px 14px rgba(7,89,133,.18);
+  font-size:clamp(11px,1.5vh,14.5px);font-weight:800;color:var(--biru-tua);
+}
+.footer-sampul .semboyan{font-weight:700;color:#7c3aed;font-style:italic}
+
+/* ============ MENU ============ */
+.grid-menu{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:clamp(8px,1.4vh,14px);min-height:0}
+.kartu-menu{
+  background:var(--kartu);border-radius:20px;border:none;cursor:pointer;
+  padding:clamp(6px,1.2vh,12px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  box-shadow:0 8px 0 rgba(7,89,133,.18), 0 12px 22px rgba(7,89,133,.18);
+  transition:transform .18s, box-shadow .18s;text-align:center;
+}
+.kartu-menu:hover{transform:translateY(-5px);box-shadow:0 12px 0 rgba(7,89,133,.2), 0 18px 28px rgba(7,89,133,.25)}
+.kartu-menu:focus-visible{outline:3px solid var(--oranye);outline-offset:3px}
+.icon-box{
+  width:clamp(66px,9vh,88px);height:clamp(66px,9vh,88px);border-radius:22px;
+  font-size:clamp(34px,4.8vh,46px);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 14px rgba(0,0,0,.18);flex:0 0 auto;
+}
+.ib1{background:linear-gradient(135deg,#38bdf8,#0284c7)}
+.ib2{background:linear-gradient(135deg,#34d399,#059669)}
+.ib3{background:linear-gradient(135deg,#a78bfa,#7c3aed)}
+.ib4{background:linear-gradient(135deg,#fbbf24,#f59e0b)}
+.ib5{background:linear-gradient(135deg,#f472b6,#db2777)}
+.ib6{background:linear-gradient(135deg,#fb7185,#e11d48)}
+.kartu-menu h3{font-size:clamp(15px,2vh,20px);font-weight:800;color:var(--biru-tua);line-height:1.15}
+.kartu-menu p{font-size:clamp(11px,1.45vh,13.5px);font-weight:600;color:#475569;line-height:1.35}
+
+/* ============ TUJUAN ============ */
+.kartu-tp{
+  flex:1;background:var(--kartu);border-radius:24px;padding:clamp(12px,2.2vh,24px);
+  box-shadow:0 10px 26px rgba(7,89,133,.2);display:flex;flex-direction:column;gap:clamp(6px,1.1vh,12px);
+  border-top:7px solid var(--hijau);min-height:0;overflow:hidden;
+}
+.tp-kepala{display:flex;align-items:center;gap:14px}
+.tp-kepala .ikon-status{font-size:clamp(44px,6vh,60px);filter:drop-shadow(0 5px 8px rgba(0,0,0,.22))}
+.tp-kepala h2{font-size:clamp(17px,2.3vh,23px);font-weight:900;color:var(--biru-tua)}
+.tp-kepala span{font-size:clamp(12px,1.55vh,15px);font-weight:700;color:#0f766e}
+.tp-list{display:grid;grid-template-columns:1fr 1fr;gap:clamp(6px,1.1vh,12px);flex:1;min-height:0}
+.tp-item{display:flex;gap:10px;align-items:flex-start;background:#f0fdfa;border-radius:14px;padding:clamp(7px,1.3vh,13px);border-left:5px solid var(--hijau)}
+.tp-item .nomor{font-size:clamp(20px,2.7vh,28px);flex:0 0 auto;line-height:1}
+.tp-item p{font-size:clamp(13px,1.65vh,16px);font-weight:600;line-height:1.45;color:#134e4a}
+.tp-kaki{font-size:clamp(12px,1.55vh,15px);font-weight:700;color:#7c3aed;text-align:center;background:#f5f3ff;border-radius:12px;padding:7px}
+
+/* ============ MATERI ============ */
+.grid-materi{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:clamp(7px,1.2vh,13px);min-height:0}
+.kartu-konsep{
+  background:var(--kartu);border-radius:18px;padding:clamp(7px,1.2vh,13px);
+  display:flex;flex-direction:column;gap:5px;box-shadow:0 7px 18px rgba(7,89,133,.18);
+  border-bottom:6px solid var(--biru);overflow:hidden;min-height:0;
+}
+.kartu-konsep .baris-atas{display:flex;align-items:center;gap:10px}
+.kartu-konsep .icon-box{width:clamp(50px,6.6vh,64px);height:clamp(50px,6.6vh,64px);border-radius:16px;font-size:clamp(26px,3.5vh,34px)}
+.kartu-konsep h3{font-size:clamp(15px,2vh,20px);font-weight:800;color:var(--biru-tua);line-height:1.15}
+.kartu-konsep p{font-size:clamp(12.5px,1.6vh,15px);font-weight:600;line-height:1.4;color:#334155}
+.kartu-konsep .rumus{font-family:"Consolas",monospace;font-weight:800;font-size:clamp(12px,1.55vh,15px);background:#eff6ff;color:#1d4ed8;border-radius:9px;padding:4px 8px;text-align:center}
+
+/* ============ SIMULASI ============ */
+.panel-sim{flex:1;display:flex;flex-direction:column;gap:clamp(5px,1vh,10px);min-height:0}
+.svg-wrap{background:rgba(255,255,255,.9);border-radius:18px;box-shadow:0 8px 20px rgba(7,89,133,.18);padding:6px;flex:0 0 auto}
+#svg-sim{width:100%;height:clamp(260px,38vh,420px);display:block}
+.kontrol-sim{display:flex;align-items:center;gap:clamp(8px,1.4vw,18px);flex-wrap:wrap;background:rgba(255,255,255,.9);border-radius:16px;padding:clamp(6px,1.1vh,12px) clamp(10px,1.6vw,20px);box-shadow:0 6px 16px rgba(7,89,133,.16)}
+.kontrol-sim label{font-size:clamp(13px,1.65vh,16px);font-weight:800;color:var(--biru-tua)}
+#slider-nilai{flex:1;min-width:150px;accent-color:var(--ungu);height:10px}
+.btn{
+  font-size:clamp(13.5px,1.8vh,17px);font-weight:800;padding:10px 22px;border-radius:999px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--biru),var(--ungu));color:#fff;box-shadow:0 5px 12px rgba(2,132,199,.3);
+  transition:transform .15s,filter .15s;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.08)}
+.btn:focus-visible{outline:3px solid var(--oranye);outline-offset:2px}
+.btn.netral{background:linear-gradient(135deg,#94a3b8,#64748b)}
+.btn.hijau{background:linear-gradient(135deg,var(--hijau),#34d399)}
+.btn.merah{background:linear-gradient(135deg,var(--merah),#f87171)}
+.telemetri{display:flex;gap:clamp(6px,1vw,12px);flex-wrap:nowrap}
+.tele{background:#fff;border-radius:12px;padding:5px 12px;border:2px solid #e2e8f0;text-align:center;min-width:86px}
+.tele .nm{font-size:clamp(10px,1.25vh,12px);font-weight:800;color:#64748b}
+.tele .vl{font-family:"Consolas",monospace;font-size:clamp(14px,1.9vh,19px);font-weight:900;color:#1d4ed8}
+
+/* ============ EVALUASI ============ */
+.babak-tab{display:flex;gap:7px;margin-bottom:clamp(5px,.9vh,10px);flex:0 0 auto;flex-wrap:wrap}
+.tab{font-size:clamp(11.5px,1.5vh,14px);font-weight:800;padding:7px 16px;border-radius:999px;border:2px solid #cbd5e1;background:#fff;color:#475569;cursor:pointer}
+.tab.aktif{background:linear-gradient(135deg,var(--ungu),var(--pink));color:#fff;border-color:transparent}
+.babak{display:none;flex:1;min-height:0;flex-direction:column;gap:clamp(5px,.9vh,10px)}
+.babak.aktif{display:flex}
+.soal{background:var(--kartu);border-radius:15px;padding:clamp(6px,1.1vh,12px) clamp(9px,1.4vw,16px);box-shadow:0 5px 14px rgba(7,89,133,.15);flex:1;display:flex;flex-direction:column;gap:5px;min-height:0;justify-content:center}
+.soal .tanya{font-size:clamp(13px,1.7vh,16px);font-weight:800;color:var(--biru-tua)}
+.opsi{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.opsi button{font-size:clamp(13.5px,1.8vh,17px);font-weight:800;padding:10px 12px;border-radius:12px;border:2px solid #bae6fd;background:#f0f9ff;color:#075985;cursor:pointer}
+.opsi button:hover{background:#e0f2fe}
+.opsi button.benar{background:linear-gradient(135deg,var(--hijau),#34d399);color:#fff;border-color:transparent}
+.opsi button.salah{background:linear-gradient(135deg,var(--merah),#f87171);color:#fff;border-color:transparent}
+.opsi button:disabled{cursor:not-allowed;opacity:.92}
+.umpan{font-size:clamp(12px,1.5vh,14.5px);font-weight:700;min-height:1.2em;color:#0f766e}
+
+#area-jodoh{flex:1;position:relative;min-height:0;background:rgba(255,255,255,.88);border-radius:16px;padding:clamp(6px,1.1vh,12px);box-shadow:0 6px 16px rgba(7,89,133,.16)}
+#svg-jodoh{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.kolom-jodoh{position:relative;z-index:2;height:100%;display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,6vw,90px);align-content:stretch}
+.sisi{display:flex;flex-direction:column;justify-content:space-around;gap:6px}
+.kartu-jodoh{
+  font-size:clamp(13px,1.7vh,16px);font-weight:800;padding:9px 14px;border-radius:12px;cursor:pointer;
+  background:#fff;border:3px solid #c7d2fe;color:#3730a3;text-align:center;transition:transform .15s;
+}
+.kartu-jodoh:hover{transform:scale(1.03)}
+.kartu-jodoh.pilih{border-color:var(--oranye);background:#fffbeb;box-shadow:0 0 0 4px rgba(245,158,11,.25)}
+.kartu-jodoh.selesai{border-color:var(--hijau);background:#ecfdf5;color:#065f46;cursor:default}
+.kartu-jodoh.kiri{font-family:"Consolas",monospace}
+
+.bs-baris{display:flex;align-items:center;gap:10px}
+.bs-baris .pernyataan{flex:1;font-size:clamp(13px,1.65vh,16px);font-weight:700;line-height:1.4}
+.bs-tombol{display:flex;gap:7px;flex:0 0 auto}
+.bs-tombol button{font-size:clamp(13.5px,1.8vh,17px);font-weight:900;padding:9px 18px;border-radius:12px;border:none;cursor:pointer;color:#fff}
+.bs-b{background:linear-gradient(135deg,var(--hijau),#34d399)}
+.bs-s{background:linear-gradient(135deg,var(--merah),#f87171)}
+.bs-tombol button:disabled{opacity:.45;cursor:not-allowed}
+
+.rekap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(6px,1.2vh,14px);background:var(--kartu);border-radius:20px;box-shadow:0 8px 20px rgba(7,89,133,.18);padding:var(--pad)}
+.piala{font-size:clamp(44px,6vh,60px);filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));animation:goyang 2.2s infinite}
+@keyframes goyang{0%,100%{transform:rotate(-7deg) scale(1)}50%{transform:rotate(7deg) scale(1.08)}}
+.nilai-total{font-size:clamp(2.4rem,6vh,4rem);font-weight:900;background:linear-gradient(135deg,var(--oranye),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.rincian{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.rincian .tele{min-width:110px}
+.predikat{font-size:clamp(13px,1.8vh,17px);font-weight:800;color:var(--biru-tua)}
+
+/* ============ PROFIL ============ */
+.kartu-profil{
+  flex:1;display:flex;align-items:center;gap:clamp(14px,3vw,40px);
+  background:var(--kartu);border-radius:26px;padding:clamp(12px,2.2vh,26px) clamp(16px,3vw,40px);
+  box-shadow:0 10px 26px rgba(7,89,133,.2);min-height:0;overflow:hidden;
+}
+.foto-guru{
+  width:clamp(130px,18vh,175px);height:clamp(130px,18vh,175px);border-radius:50%;object-fit:cover;object-position:center 22%;
+  border:5px solid transparent;background:linear-gradient(135deg,#f59e0b,#db2777,#7c3aed) border-box;
+  box-shadow:0 10px 22px rgba(124,58,237,.35);flex:0 0 auto;
+  padding:0;
+}
+.bingkai-foto{
+  width:clamp(130px,18vh,175px);height:clamp(130px,18vh,175px);border-radius:50%;flex:0 0 auto;
+  background:linear-gradient(135deg,#f59e0b,#db2777,#7c3aed);padding:5px;
+  box-shadow:0 12px 24px rgba(124,58,237,.35);display:flex;align-items:center;justify-content:center;
+}
+.bingkai-foto img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center 20%;background:#e2e8f0}
+.profil-teks{flex:1;display:flex;flex-direction:column;gap:clamp(4px,.9vh,10px);min-width:0}
+.profil-teks .nama{font-size:clamp(20px,2.9vh,24px);font-weight:900;color:var(--biru-tua)}
+.profil-teks .baris{font-size:clamp(13px,1.7vh,15px);font-weight:700;color:#334155;display:flex;align-items:center;gap:8px}
+.profil-teks .kutipan{
+  font-size:clamp(13px,1.7vh,15.5px);font-weight:700;font-style:italic;color:#6d28d9;
+  background:#f5f3ff;border-left:5px solid var(--ungu);border-radius:12px;padding:9px 14px;line-height:1.45;
+}
+.tag-baris{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ============ POPUP FAKTA ============ */
+#lapis-popup{position:absolute;inset:0;background:rgba(15,43,70,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:5%}
+#lapis-popup.tampil{display:flex}
+.popup{background:#fff;border-radius:24px;padding:clamp(14px,2.4vh,26px);max-width:70%;text-align:center;box-shadow:0 20px 45px rgba(0,0,0,.35);border-top:8px solid var(--oranye);animation:pop .3s ease}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.popup .ikon-status{font-size:clamp(44px,6vh,60px);filter:drop-shadow(0 5px 8px rgba(0,0,0,.2))}
+.popup h3{font-size:clamp(16px,2.2vh,21px);font-weight:900;color:var(--biru-tua);margin:6px 0}
+.popup p{font-size:clamp(13px,1.65vh,16px);font-weight:600;line-height:1.5;color:#334155;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div id="bg-overlay"></div>
+
+<div id="stage-wrap">
+<div id="stage-16-9">
+
+<!-- ===================== HALAMAN 1 : SAMPUL ===================== -->
+<section class="page active" id="hal-sampul">
+  <div class="kapsul-instansi">
+    <img src="logo-sekolah.png" alt="Logo sekolah" onerror="this.style.display='none'">
+    <div class="instansi-teks">
+      <div class="sekolah" data-sekolah>SMP Negeri 1 Lamongan</div>
+      <div class="dinas">Dinas Pendidikan Kabupaten Lamongan — Provinsi Jawa Timur</div>
+      <div class="badge-baris">
+        <span class="badge b-merdeka">Kurikulum Merdeka</span>
+        <span class="badge b-fase">Fase D — Kelas VIII</span>
+        <span class="badge b-mapel" data-mapel>Informatika</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sampul-tengah">
+    <h1 class="judul-sampul" data-materi>Himpunan dan Sistem Bilangan</h1>
+    <p class="sub-sampul">Desimal · Biner · Oktal · Heksadesimal</p>
+    <p class="chip-materi">Media Pembelajaran Interaktif — belajar mengubah bilangan antarbasis dengan simulasi langsung</p>
+    <button class="tombol-mulai" onclick="klik();buka('hal-menu')">
+      <span class="lingkaran-play">▶</span>
+      <span class="teks-mulai">MULAI</span>
+    </button>
+  </div>
+
+  <div class="footer-sampul">
+    <span>👨‍🏫 Pengembang media: <span data-guru>Edy Santoso, S.Pd.</span></span>
+    <span>·</span>
+    <span data-sekolah>SMP Negeri 1 Lamongan</span>
+    <span class="semboyan">“Satu dan nol pun punya makna, asal tahu cara membacanya.”</span>
+  </div>
+</section>
+
+<!-- ===================== HALAMAN 2 : MENU ===================== -->
+<section class="page" id="hal-menu">
+  <div class="topbar">
+    <div class="judul-halaman">🧭 Menu Utama — <span data-materi>Himpunan dan Sistem Bilangan</span></div>
+    <div class="nav-kanan">
+      <button class="ikon-bulat" onclick="klik();buka('hal-sampul')" title="Beranda">🏠</button>
+      <button class="ikon-bulat" onclick="klik();zoom(-0.08)" title="Perkecil huruf">A−</button>
+      <button class="ikon-bulat" onclick="klik();zoom(0.08)" title="Perbesar huruf">A+</button>
+      <button class="ikon-bulat" onclick="klik();zoomReset()" title="Ukuran normal">⟲</button>
+      <button class="ikon-bulat aktif" id="tombol-suara" onclick="toggleSuara()" title="Suara ON/OFF">🔊</button>
+    </div>
+  </div>
+
+  <div class="grid-menu">
+    <button class="kartu-menu" onclick="klik();buka('hal-tujuan')">
+      <div class="icon-box ib1">🎯</div><h3>Tujuan Pembelajaran</h3>
+      <p>Capaian dan indikator yang akan kamu kuasai</p>
+    </button>
+    <button class="kartu-menu" onclick="klik();buka('hal-materi')">
+      <div class="icon-box ib2">📖</div><h3>Materi Pembelajaran</h3>
+      <p>Enam konsep kunci himpunan bilangan dan basisnya</p>
+    </button>
+    <button class="kartu-menu" onclick="klik();buka('hal-simulasi');gambarSim()">
+      <div class="icon-box ib3">🕹️</div><h3>Simulasi Interaktif</h3>
+      <p>Laboratorium konversi bilangan 8 bit</p>
+    </button>
+    <button class="kartu-menu" onclick="klik();buka('hal-evaluasi')">
+      <div class="icon-box ib4">📝</div><h3>Evaluasi</h3>
+      <p>Tiga babak asesmen berbobot 100 poin</p>
+    </button>
+    <button class="kartu-menu" onclick="klik();buka('hal-profil')">
+      <div class="icon-box ib5">👨‍🏫</div><h3>Profil Guru</h3>
+      <p>Fasilitator pembelajaran Informatika</p>
+    </button>
+    <button class="kartu-menu" onclick="klik();tampilFakta()">
+      <div class="icon-box ib6">💡</div><h3>Wawasan &amp; Fakta</h3>
+      <p>Fakta menarik seputar bilangan dan komputer</p>
+    </button>
+  </div>
+</section>
+
+<!-- ===================== HALAMAN 3 : TUJUAN ===================== -->
+<section class="page" id="hal-tujuan">
+  <div class="topbar">
+    <div class="judul-halaman">🎯 Tujuan Pembelajaran</div>
+    <div class="nav-kanan">
+      <button class="ikon-bulat" onclick="klik();buka('hal-menu')" title="Menu">📋</button>
+      <button class="ikon-bulat" onclick="klik();buka('hal-sampul')" title="Beranda">🏠</button>
+    </div>
+  </div>
+  <div class="kartu-tp">
+    <div class="tp-kepala">
+      <span class="ikon-status">🏅</span>
+      <div>
+        <h2>Murid mampu mengonversi bilangan desimal ke biner, oktal, dan heksadesimal serta sebaliknya</h2>
+        <span data-mapel>Informatika</span><span> · Fase D — Kelas VIII · Elemen Sistem Komputer</span>
+      </div>
+    </div>
+    <div class="tp-list">
+      <div class="tp-item"><span class="nomor">🔢</span><p>Menjelaskan pengertian himpunan bilangan serta membedakan basis desimal, biner, oktal, dan heksadesimal beserta lambang digitnya.</p></div>
+      <div class="tp-item"><span class="nomor">⚙️</span><p>Menerapkan teknik bagi-sisa untuk mengubah bilangan desimal menjadi biner, oktal, dan heksadesimal dengan tepat.</p></div>
+      <div class="tp-item"><span class="nomor">🧮</span><p>Menghitung nilai desimal dari bilangan biner, oktal, dan heksadesimal menggunakan bobot posisi digit.</p></div>
+      <div class="tp-item"><span class="nomor">🔁</span><p>Mengonversi antarbasis secara cepat melalui pengelompokan 3 bit (oktal) dan 4 bit (heksadesimal).</p></div>
+      <div class="tp-item"><span class="nomor">💻</span><p>Mengaitkan sistem bilangan biner dengan cara komputer menyimpan data, warna, dan alamat memori.</p></div>
+      <div class="tp-item"><span class="nomor">🤝</span><p>Menyelesaikan soal konversi secara mandiri maupun berkelompok dengan teliti dan percaya diri.</p></div>
+    </div>
+    <p class="tp-kaki">Profil Pelajar Pancasila: bernalar kritis · mandiri · gotong royong</p>
+  </div>
+</section>
+
+<!-- ===================== HALAMAN 4 : MATERI ===================== -->
+<section class="page" id="hal-materi">
+  <div class="topbar">
+    <div class="judul-halaman">📖 Materi Inti — Sistem Bilangan</div>
+    <div class="nav-kanan">
+      <button class="ikon-bulat" onclick="klik();buka('hal-menu')" title="Menu">📋</button>
+      <button class="ikon-bulat" onclick="klik();buka('hal-simulasi');gambarSim()" title="Simulasi">🕹️</button>
+      <button class="ikon-bulat" onclick="klik();buka('hal-sampul')" title="Beranda">🏠</button>
+    </div>
+  </div>
+  <div class="grid-materi">
+    <article class="kartu-konsep">
+      <div class="baris-atas"><div class="icon-box ib1">🧺</div><h3>Himpunan Bilangan</h3></div>
+      <p>Himpunan adalah kumpulan objek yang jelas batasnya. Digit setiap basis membentuk himpunan tersendiri, sehingga digit di luar himpunan itu tidak sah.</p>
+      <div class="rumus">B = {0, 1} · O = {0…7} · H = {0…9, A…F}</div>
+    </article>
+    <article class="kartu-konsep">
+      <div class="baris-atas"><div class="icon-box ib2">🔟</div><h3>Desimal (Basis 10)</h3></div>
+      <p>Sistem sehari-hari dengan sepuluh digit. Nilai tiap digit ditentukan bobot pangkat 10 sesuai posisinya dari kanan.</p>
+      <div class="rumus">245 = 2×10² + 4×10¹ + 5×10⁰</div>
+    </article>
+    <article class="kartu-konsep">
+      <div class="baris-atas"><div class="icon-box ib3">💡</div><h3>Biner (Basis 2)</h3></div>
+      <p>Hanya mengenal 0 dan 1, mewakili saklar mati dan hidup. Inilah bahasa asli semua perangkat digital.</p>
+      <div class="rumus">1101₂ = 8+4+0+1 = 13₁₀</div>
+    </article>
+    <article class="kartu-konsep">
+      <div class="baris-atas"><div class="icon-box ib4">8️⃣</div><h3>Oktal (Basis 8)</h3></div>
+      <p>Memakai digit 0 sampai 7. Satu digit oktal setara tepat tiga digit biner, sehingga penulisan biner jadi lebih ringkas.</p>
+      <div class="rumus">57₈ = 5×8 + 7 = 47₁₀</div>
+    </article>
+    <article class="kartu-konsep">
+      <div class="baris-atas"><div class="icon-box ib5">🅰️</div><h3>Heksadesimal (Basis 16)</h3></div>
+      <p>Enam belas lambang, dengan A sampai F mewakili 10 sampai 15. Dipakai untuk kode warna dan alamat memori.</p>
+      <div class="rumus">2C₁₆ = 2×16 + 12 = 44₁₀</div>
+    </article>
+    <article class="kartu-konsep">
+      <div class="baris-atas"><div class="icon-box ib6">🔁</div><h3>Teknik Konversi</h3></div>
+      <p>Dari desimal: bagi berulang dengan basis, sisanya dibaca dari bawah ke atas. Menuju desimal: kalikan tiap digit dengan bobot posisinya lalu jumlahkan.</p>
+      <div class="rumus">13 ÷ 2 → sisa 1,0,1,1 → 1101₂</div>
+    </article>
+  </div>
+</section>
+
+<!-- ===================== HALAMAN 5 : SIMULASI ===================== -->
+<section class="page" id="hal-simulasi">
+  <div class="topbar">
+    <div class="judul-halaman">🕹️ Laboratorium Konversi 8 Bit</div>
+    <div class="nav-kanan">
+      <button class="ikon-bulat" onclick="klik();buka('hal-menu')" title="Menu">📋</button>
+      <button class="ikon-bulat" onclick="klik();buka('hal-evaluasi')" title="Evaluasi">📝</button>
+      <button class="ikon-bulat" onclick="klik();buka('hal-sampul')" title="Beranda">🏠</button>
+    </div>
+  </div>
+  <div class="panel-sim">
+    <div class="svg-wrap">
+      <svg id="svg-sim" viewBox="0 0 960 380" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Diagram delapan bit dan hasil konversinya"></svg>
+    </div>
+    <div class="kontrol-sim">
+      <label for="slider-nilai">Geser nilai desimal</label>
+      <input type="range" id="slider-nilai" min="0" max="255" value="13" aria-label="Nilai desimal 0 sampai 255">
+      <button class="btn netral" onclick="klik();acakNilai()">🎲 Acak</button>
+      <button class="btn merah" onclick="klik();setNilai(0)">↺ Nolkan</button>
+      <div class="telemetri">
+        <div class="tele"><div class="nm">Desimal</div><div class="vl" id="t-des">13</div></div>
+        <div class="tele"><div class="nm">Biner</div><div class="vl" id="t-bin">00001101</div></div>
+        <div class="tele"><div class="nm">Oktal</div><div class="vl" id="t-okt">15</div></div>
+        <div class="tele"><div class="nm">Heksa</div><div class="vl" id="t-hex">0D</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== HALAMAN 6 : EVALUASI ===================== -->
+<section class="page" id="hal-evaluasi">
+  <div class="topbar">
+    <div class="judul-halaman">📝 Evaluasi — <span id="skor-judul">Skor 0 / 100</span></div>
+    <div class="nav-kanan">
+      <button class="ikon-bulat" onclick="klik();buka('hal-menu')" title="Menu">📋</button>
+      <button class="ikon-bulat" onclick="klik();buka('hal-sampul')" title="Beranda">🏠</button>
+    </div>
+  </div>
+
+  <div class="babak-tab">
+    <button class="tab aktif" onclick="klik();babak('A',this)">Babak A · Pilihan Ganda (30)</button>
+    <button class="tab" onclick="klik();babak('B',this)">Babak B · Menjodohkan (40)</button>
+    <button class="tab" onclick="klik();babak('C',this)">Babak C · Benar/Salah (30)</button>
+    <button class="tab" onclick="klik();babak('D',this);hitungRekap()">Babak D · Rekap Skor</button>
+  </div>
+
+  <!-- Babak A -->
+  <div class="babak aktif" id="babak-A"></div>
+
+  <!-- Babak B -->
+  <div class="babak" id="babak-B">
+    <div id="area-jodoh">
+      <svg id="svg-jodoh"></svg>
+      <div class="kolom-jodoh">
+        <div class="sisi" id="sisi-kiri"></div>
+        <div class="sisi" id="sisi-kanan"></div>
+      </div>
+    </div>
+    <p class="umpan" id="umpan-jodoh">Klik satu kartu bilangan di kiri, lalu klik nilai yang sesuai di kanan. Setiap pasangan benar bernilai 10 poin.</p>
+  </div>
+
+  <!-- Babak C -->
+  <div class="babak" id="babak-C"></div>
+
+  <!-- Babak D -->
+  <div class="babak" id="babak-D">
+    <div class="rekap">
+      <div class="piala">🏆</div>
+      <div class="nilai-total" id="nilai-total">0</div>
+      <div class="predikat" id="predikat">Selesaikan ketiga babak untuk melihat hasilmu.</div>
+      <div class="rincian">
+        <div class="tele"><div class="nm">Babak A</div><div class="vl" id="r-a">0 / 30</div></div>
+        <div class="tele"><div class="nm">Babak B</div><div class="vl" id="r-b">0 / 40</div></div>
+        <div class="tele"><div class="nm">Babak C</div><div class="vl" id="r-c">0 / 30</div></div>
+      </div>
+      <button class="btn merah" onclick="klik();resetEvaluasi()">↺ Ulangi evaluasi</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== HALAMAN 7 : PROFIL ===================== -->
+<section class="page" id="hal-profil">
+  <div class="topbar">
+    <div class="judul-halaman">👨‍🏫 Profil Guru Pengembang Media</div>
+    <div class="nav-kanan">
+      <button class="ikon-bulat" onclick="klik();buka('hal-menu')" title="Menu">📋</button>
+      <button class="ikon-bulat" onclick="klik();buka('hal-sampul')" title="Beranda">🏠</button>
+    </div>
+  </div>
+  <div class="kartu-profil">
+    <div class="bingkai-foto">
+      <img src="foto-guru.jpeg" alt="Foto guru" onerror="this.style.display='none'">
+    </div>
+    <div class="profil-teks">
+      <div class="nama" data-guru>Edy Santoso, S.Pd.</div>
+      <div class="baris">🏫 <span data-sekolah>SMP Negeri 1 Lamongan</span></div>
+      <div class="baris">📚 Guru <span data-mapel>Informatika</span> — Fase D, Kelas VIII</div>
+      <div class="baris">🧩 Pengampu materi <span data-materi>Himpunan dan Sistem Bilangan</span></div>
+      <div class="tag-baris">
+        <span class="badge b-merdeka">Kurikulum Merdeka</span>
+        <span class="badge b-fase">Fase D</span>
+        <span class="badge b-mapel">Festival MPI</span>
+      </div>
+      <p class="kutipan">“Komputer hanya mengenal nol dan satu. Tugas kita sebagai guru adalah memastikan setiap murid tahu bahwa di balik dua angka sederhana itu tersimpan seluruh dunia digital.”</p>
+    </div>
+    <div class="bingkai-foto" style="background:linear-gradient(135deg,#0284c7,#22d3ee)">
+      <img src="logo-sekolah.png" alt="Logo sekolah" style="object-fit:contain;background:#fff;padding:10px" onerror="this.style.display='none'">
+    </div>
+  </div>
+</section>
+
+<!-- ===================== POPUP FAKTA ===================== -->
+<div id="lapis-popup" onclick="if(event.target===this)tutupFakta()">
+  <div class="popup">
+    <div class="ikon-status">💡</div>
+    <h3 id="fakta-judul">Tahukah kamu?</h3>
+    <p id="fakta-isi"></p>
+    <button class="btn" onclick="klik();tampilFakta()">🔄 Fakta lain</button>
+    <button class="btn netral" onclick="klik();tutupFakta()">✕ Tutup</button>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+/* ================= IDENTITAS DINAMIS (BAGIAN 1) ================= */
+const DATA = {
+  mapel   : "Informatika",
+  fase    : "Fase D — Kelas VIII SMP",
+  materi  : "Himpunan dan Sistem Bilangan",
+  tujuan  : "Murid mampu mengonversi sistem bilangan desimal ke biner, oktal, dan heksadesimal serta sebaliknya",
+  guru    : "Edy Santoso, S.Pd.",
+  sekolah : "SMP Negeri 1 Lamongan"
+};
+document.querySelectorAll('[data-sekolah]').forEach(e=>e.textContent=DATA.sekolah);
+document.querySelectorAll('[data-guru]').forEach(e=>e.textContent=DATA.guru);
+document.querySelectorAll('[data-mapel]').forEach(e=>e.textContent=DATA.mapel);
+document.querySelectorAll('[data-materi]').forEach(e=>e.textContent=DATA.materi);
+document.title = "MPI " + DATA.mapel + " — " + DATA.materi + " | " + DATA.sekolah;
+
+/* ================= AUDIO SINTETIS (WEB AUDIO API) ================= */
+let ctxAudio=null, suaraAktif=true;
+function ac(){ if(!ctxAudio){ try{ ctxAudio=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ ctxAudio=null; } } return ctxAudio; }
+function nada(f1,f2,dur,tipe,vol){
+  if(!suaraAktif) return; const c=ac(); if(!c) return;
+  if(c.state==='suspended') c.resume();
+  const o=c.createOscillator(), g=c.createGain();
+  o.type=tipe||'sine'; o.frequency.setValueAtTime(f1,c.currentTime);
+  if(f2) o.frequency.exponentialRampToValueAtTime(f2,c.currentTime+dur);
+  g.gain.setValueAtTime(vol||0.16,c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+dur);
+  o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+dur);
+}
+function klik(){ nada(450,880,0.10,'triangle',0.14); }
+function bunyiBenar(){ [523.25,659.25,783.99].forEach((f,i)=>setTimeout(()=>nada(f,null,0.28,'sine',0.15),i*110)); }
+function bunyiSalah(){ nada(196,110,0.38,'sawtooth',0.12); }
+function bunyiPindah(){ nada(700,1100,0.09,'sine',0.10); }
+function bunyiJelajah(v){ nada(220+v*4,260+v*4,0.07,'square',0.05); }
+function bunyiPiala(){ [392,523.25,659.25,783.99,1046.5].forEach((f,i)=>setTimeout(()=>nada(f,null,0.3,'triangle',0.14),i*130)); }
+function toggleSuara(){
+  suaraAktif=!suaraAktif;
+  const b=document.getElementById('tombol-suara');
+  b.textContent = suaraAktif ? '🔊' : '🔇';
+  b.classList.toggle('aktif',suaraAktif);
+  if(suaraAktif) klik();
+}
+
+/* ================= NAVIGASI & AKSESIBILITAS ================= */
+function buka(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  bunyiPindah();
+  if(id==='hal-evaluasi') setTimeout(gambarSemuaGaris,80);
+  if(id==='hal-simulasi') setTimeout(gambarSim,60);
+}
+let skala=1.0;
+function terapkanSkala(){ document.getElementById('stage-16-9').style.setProperty('--font-scale',skala.toFixed(2)); }
+function zoom(d){ skala=Math.min(1.35,Math.max(0.75,skala+d)); terapkanSkala(); }
+function zoomReset(){ skala=1.0; terapkanSkala(); }
+
+/* ================= SIMULASI KONVERSI 8 BIT ================= */
+const BOBOT=[128,64,32,16,8,4,2,1];
+let nilaiSim=13;
+const slider=document.getElementById('slider-nilai');
+slider.addEventListener('input',()=>{ setNilai(parseInt(slider.value,10),true); });
+function setNilai(v,dariSlider){
+  nilaiSim=Math.max(0,Math.min(255,v));
+  slider.value=nilaiSim;
+  if(dariSlider) bunyiJelajah(nilaiSim); else klik();
+  gambarSim();
+}
+function acakNilai(){ setNilai(Math.floor(Math.random()*256)); }
+function toggleBit(i){
+  nilaiSim ^= BOBOT[i];
+  slider.value=nilaiSim;
+  nada(520+ i*60, 760+i*60, 0.12,'triangle',0.13);
+  gambarSim();
+}
+function bin8(v){ return v.toString(2).padStart(8,'0'); }
+
+function pill(x,y,teks,warna,lebar){
+  const w = lebar || (teks.length*8.6+18);
+  return `<g><rect x="${x-w/2}" y="${y-13}" width="${w}" height="26" rx="6" fill="white" stroke="${warna}" stroke-width="1.5"/>`+
+         `<text x="${x}" y="${y+5}" text-anchor="middle" font-size="14px" font-weight="800" fill="${warna}" font-family="Consolas,monospace">${teks}</text></g>`;
+}
+function gambarSim(){
+  const svg=document.getElementById('svg-sim'); if(!svg) return;
+  const b=bin8(nilaiSim);
+  let s='';
+  s+=`<defs>
+    <linearGradient id="gOn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#059669"/></linearGradient>
+    <linearGradient id="gOff" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2e8f0"/><stop offset="1" stop-color="#cbd5e1"/></linearGradient>
+    <linearGradient id="gBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#db2777"/></linearGradient>
+  </defs>`;
+
+  s+=`<text x="480" y="30" text-anchor="middle" font-size="15px" font-weight="800" fill="#075985">Klik kotak bit untuk menyalakan atau memadamkannya</text>`;
+
+  // Delapan sel bit
+  const x0=68, gap=104, yK=60, sisi=74;
+  for(let i=0;i<8;i++){
+    const x=x0+i*gap, on=b[i]==='1';
+    s+=`<g style="cursor:pointer" onclick="toggleBit(${i})">
+      <rect x="${x}" y="${yK}" width="${sisi}" height="${sisi}" rx="14" fill="${on?'url(#gOn)':'url(#gOff)'}" stroke="${on?'#047857':'#94a3b8'}" stroke-width="5"/>
+      <text x="${x+sisi/2}" y="${yK+50}" text-anchor="middle" font-size="34px" font-weight="900" fill="${on?'#ffffff':'#64748b'}" font-family="Consolas,monospace">${b[i]}</text>
+      ${on?`<circle cx="${x+sisi-9}" cy="${yK+9}" r="7" fill="#fde047"><animate attributeName="r" values="5;9;5" dur="1.3s" repeatCount="indefinite"/></circle>`:''}
+    </g>`;
+    s+=pill(x+sisi/2, yK+sisi+24, String(BOBOT[i]), on?'#059669':'#94a3b8', 58);
+    s+=`<text x="${x+sisi/2}" y="${yK+sisi+52}" text-anchor="middle" font-size="13px" font-weight="800" fill="#7c3aed">2^${7-i}</text>`;
+  }
+
+  // Garis alur menuju kotak hasil
+  s+=`<path d="M 480 232 L 480 258" stroke="url(#gBar)" stroke-width="6" stroke-linecap="round" stroke-dasharray="12 8">
+        <animate attributeName="stroke-dashoffset" from="40" to="0" dur="1s" repeatCount="indefinite"/></path>`;
+  s+=`<path d="M 470 250 L 480 262 L 490 250" fill="none" stroke="#db2777" stroke-width="5" stroke-linecap="round"/>`;
+
+  // Penjumlahan bobot aktif
+  const aktif=[]; for(let i=0;i<8;i++) if(b[i]==='1') aktif.push(BOBOT[i]);
+  const jml = aktif.length ? aktif.join(' + ') + ' = ' + nilaiSim : 'semua bit padam = 0';
+  s+=pill(480,285,jml,'#7c3aed',Math.max(200,jml.length*9.4+26));
+
+  // Empat kotak hasil konversi
+  const hasil=[
+    ['DESIMAL', String(nilaiSim), '#1d4ed8'],
+    ['BINER', b + '\u2082', '#059669'],
+    ['OKTAL', nilaiSim.toString(8) + '\u2088', '#b45309'],
+    ['HEKSA', nilaiSim.toString(16).toUpperCase().padStart(2,'0') + '\u2081\u2086', '#be185d']
+  ];
+  hasil.forEach((h,i)=>{
+    const w=204, x=40+i*228, y=316;
+    s+=`<rect x="${x}" y="${y}" width="${w}" height="52" rx="14" fill="white" stroke="${h[2]}" stroke-width="4"/>`;
+    s+=`<text x="${x+14}" y="${y+22}" font-size="13px" font-weight="800" fill="#64748b">${h[0]}</text>`;
+    s+=`<text x="${x+w-14}" y="${y+40}" text-anchor="end" font-size="20px" font-weight="900" fill="${h[2]}" font-family="Consolas,monospace">${h[1]}</text>`;
+  });
+
+  svg.innerHTML=s;
+  document.getElementById('t-des').textContent=nilaiSim;
+  document.getElementById('t-bin').textContent=b;
+  document.getElementById('t-okt').textContent=nilaiSim.toString(8);
+  document.getElementById('t-hex').textContent=nilaiSim.toString(16).toUpperCase().padStart(2,'0');
+}
+
+/* ================= EVALUASI ================= */
+const SOAL_PG=[
+  {t:"Bilangan biner 1011₂ jika dikonversi ke desimal bernilai …", o:["9","11","13","15"], j:1,
+   p:"1011₂ = 8 + 0 + 2 + 1 = 11₁₀."},
+  {t:"Hasil konversi 45₁₀ ke sistem bilangan oktal adalah …", o:["45₈","55₈","57₈","65₈"], j:1,
+   p:"45 ÷ 8 = 5 sisa 5, lalu 5 ÷ 8 = 0 sisa 5. Dibaca dari bawah: 55₈."},
+  {t:"Bilangan heksadesimal 2C₁₆ senilai dengan bilangan desimal …", o:["42","44","46","48"], j:1,
+   p:"C bernilai 12, sehingga 2×16 + 12 = 44₁₀."}
+];
+const SOAL_BS=[
+  {t:"Sistem bilangan biner hanya menggunakan digit 0 dan 1.", j:true, p:"Benar. Dua digit itu mewakili kondisi saklar padam dan menyala."},
+  {t:"Angka 9 termasuk digit yang sah dalam sistem bilangan oktal.", j:false, p:"Salah. Oktal hanya memuat digit 0 sampai 7."},
+  {t:"Satu digit heksadesimal dapat diwakili tepat oleh empat digit biner.", j:true, p:"Benar. Karena 2⁴ = 16, satu digit heksa setara satu kelompok 4 bit."}
+];
+const PASANGAN=[
+  {kiri:"1101₂", kanan:"13₁₀"},
+  {kiri:"17₈",   kanan:"15₁₀"},
+  {kiri:"1F₁₆",  kanan:"31₁₀"},
+  {kiri:"255₁₀", kanan:"FF₁₆"}
+];
+let skorA=0, skorB=0, skorC=0, jwbA=[], jwbC=[], pasanganBenar=[];
+
+function bangunPG(){
+  const w=document.getElementById('babak-A'); w.innerHTML='';
+  SOAL_PG.forEach((s,i)=>{
+    const d=document.createElement('div'); d.className='soal';
+    d.innerHTML=`<p class="tanya">${i+1}. ${s.t}</p>
+      <div class="opsi" id="opsi-${i}">${s.o.map((o,k)=>`<button onclick="jawabPG(${i},${k},this)">${o}</button>`).join('')}</div>
+      <p class="umpan" id="umpan-a-${i}"></p>`;
+    w.appendChild(d);
+  });
+}
+function jawabPG(i,k,el){
+  if(jwbA[i]!==undefined) return;
+  jwbA[i]=k;
+  const s=SOAL_PG[i], tombol=document.querySelectorAll('#opsi-'+i+' button');
+  tombol.forEach(b=>b.disabled=true);
+  tombol[s.j].classList.add('benar');
+  const u=document.getElementById('umpan-a-'+i);
+  if(k===s.j){ skorA+=10; bunyiBenar(); u.style.color='#047857'; u.textContent='✔ Tepat! '+s.p; }
+  else { el.classList.add('salah'); bunyiSalah(); u.style.color='#b91c1c'; u.textContent='✘ Belum tepat. '+s.p; }
+  perbaruiSkor();
+}
+
+function bangunBS(){
+  const w=document.getElementById('babak-C'); w.innerHTML='';
+  SOAL_BS.forEach((s,i)=>{
+    const d=document.createElement('div'); d.className='soal';
+    d.innerHTML=`<div class="bs-baris">
+        <p class="pernyataan">${i+1}. ${s.t}</p>
+        <div class="bs-tombol" id="bs-${i}">
+          <button class="bs-b" onclick="jawabBS(${i},true)">✓ BENAR</button>
+          <button class="bs-s" onclick="jawabBS(${i},false)">✗ SALAH</button>
+        </div>
+      </div><p class="umpan" id="umpan-c-${i}"></p>`;
+    w.appendChild(d);
+  });
+}
+function jawabBS(i,v){
+  if(jwbC[i]!==undefined) return;
+  jwbC[i]=v;
+  document.querySelectorAll('#bs-'+i+' button').forEach(b=>b.disabled=true);
+  const s=SOAL_BS[i], u=document.getElementById('umpan-c-'+i);
+  if(v===s.j){ skorC+=10; bunyiBenar(); u.style.color='#047857'; u.textContent='✔ '+s.p; }
+  else { bunyiSalah(); u.style.color='#b91c1c'; u.textContent='✘ '+s.p; }
+  perbaruiSkor();
+}
+
+/* --- Menjodohkan dengan garis SVG --- */
+let pilihKiri=null;
+function bangunJodoh(){
+  const kiri=document.getElementById('sisi-kiri'), kanan=document.getElementById('sisi-kanan');
+  kiri.innerHTML=''; kanan.innerHTML='';
+  PASANGAN.forEach((p,i)=>{
+    const a=document.createElement('div');
+    a.className='kartu-jodoh kiri'; a.textContent=p.kiri; a.dataset.idx=i;
+    a.onclick=()=>pilihSisiKiri(a);
+    kiri.appendChild(a);
+  });
+  const urut=PASANGAN.map((p,i)=>({t:p.kanan,i:i})).sort(()=>Math.random()-0.5);
+  urut.forEach(o=>{
+    const b=document.createElement('div');
+    b.className='kartu-jodoh kanan'; b.textContent=o.t; b.dataset.idx=o.i;
+    b.onclick=()=>pilihSisiKanan(b);
+    kanan.appendChild(b);
+  });
+  document.getElementById('svg-jodoh').innerHTML='';
+}
+function pilihSisiKiri(el){
+  if(el.classList.contains('selesai')) return;
+  klik();
+  document.querySelectorAll('#sisi-kiri .kartu-jodoh').forEach(k=>k.classList.remove('pilih'));
+  el.classList.add('pilih'); pilihKiri=el;
+}
+function pilihSisiKanan(el){
+  if(!pilihKiri){ document.getElementById('umpan-jodoh').textContent='Pilih dulu satu kartu bilangan di kolom kiri.'; bunyiSalah(); return; }
+  if(el.classList.contains('selesai')) return;
+  const u=document.getElementById('umpan-jodoh');
+  if(el.dataset.idx===pilihKiri.dataset.idx){
+    skorB+=10; bunyiBenar();
+    pilihKiri.classList.remove('pilih'); pilihKiri.classList.add('selesai'); el.classList.add('selesai');
+    pasanganBenar.push([pilihKiri,el]);
+    u.style.color='#047857'; u.textContent='✔ Pasangan tepat: '+pilihKiri.textContent+' setara '+el.textContent+' (+10 poin)';
+    pilihKiri=null; gambarSemuaGaris(); perbaruiSkor();
+  } else {
+    bunyiSalah();
+    el.animate([{transform:'translateX(0)'},{transform:'translateX(-9px)'},{transform:'translateX(9px)'},{transform:'translateX(0)'}],{duration:280});
+    u.style.color='#b91c1c'; u.textContent='✘ Belum cocok. Hitung ulang nilai desimalnya, lalu coba lagi.';
+  }
+}
+function gambarSemuaGaris(){
+  const area=document.getElementById('area-jodoh'), svg=document.getElementById('svg-jodoh');
+  if(!area||!svg) return;
+  const r=area.getBoundingClientRect();
+  if(r.width===0) return;
+  svg.setAttribute('viewBox','0 0 '+r.width+' '+r.height);
+  let s='';
+  pasanganBenar.forEach((p,n)=>{
+    const a=p[0].getBoundingClientRect(), b=p[1].getBoundingClientRect();
+    const x1=a.right-r.left, y1=a.top+a.height/2-r.top;
+    const x2=b.left-r.left,  y2=b.top+b.height/2-r.top;
+    const mx=(x1+x2)/2;
+    s+=`<path d="M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}" fill="none" stroke="#059669" stroke-width="5" stroke-linecap="round" stroke-dasharray="1000" >
+          <animate attributeName="stroke-dashoffset" from="1000" to="0" dur="0.6s" fill="freeze"/></path>
+        <circle cx="${x1}" cy="${y1}" r="8" fill="#059669"/><circle cx="${x2}" cy="${y2}" r="8" fill="#059669"/>`;
+  });
+  svg.innerHTML=s;
+}
+window.addEventListener('resize',()=>{ gambarSemuaGaris(); });
+
+function babak(k,el){
+  document.querySelectorAll('#hal-evaluasi .babak').forEach(b=>b.classList.remove('aktif'));
+  document.getElementById('babak-'+k).classList.add('aktif');
+  document.querySelectorAll('#hal-evaluasi .tab').forEach(t=>t.classList.remove('aktif'));
+  el.classList.add('aktif');
+  if(k==='B') setTimeout(gambarSemuaGaris,60);
+}
+function perbaruiSkor(){
+  document.getElementById('skor-judul').textContent='Skor '+(skorA+skorB+skorC)+' / 100';
+}
+function hitungRekap(){
+  const total=skorA+skorB+skorC;
+  document.getElementById('r-a').textContent=skorA+' / 30';
+  document.getElementById('r-b').textContent=skorB+' / 40';
+  document.getElementById('r-c').textContent=skorC+' / 30';
+  document.getElementById('nilai-total').textContent=total;
+  const p=document.getElementById('predikat');
+  if(total>=90) p.textContent='Luar biasa! Konversi antarbasis sudah kamu kuasai.';
+  else if(total>=75) p.textContent='Bagus sekali. Tinggal rapikan bagian yang masih meleset.';
+  else if(total>=60) p.textContent='Cukup baik. Ulangi simulasi 8 bit untuk memperkuat pemahaman.';
+  else if(total>0) p.textContent='Terus berlatih. Buka kembali materi lalu coba evaluasi sekali lagi.';
+  else p.textContent='Selesaikan ketiga babak untuk melihat hasilmu.';
+  if(total>0) bunyiPiala();
+}
+function resetEvaluasi(){
+  skorA=skorB=skorC=0; jwbA=[]; jwbC=[]; pasanganBenar=[]; pilihKiri=null;
+  bangunPG(); bangunBS(); bangunJodoh();
+  document.getElementById('umpan-jodoh').style.color='#0f766e';
+  document.getElementById('umpan-jodoh').textContent='Klik satu kartu bilangan di kiri, lalu klik nilai yang sesuai di kanan. Setiap pasangan benar bernilai 10 poin.';
+  perbaruiSkor(); hitungRekap();
+}
+
+/* ================= WAWASAN & FAKTA ================= */
+const FAKTA=[
+  ["Kode warna itu heksadesimal","Warna #FF0000 pada layar berarti merah penuh: FF₁₆ = 255₁₀ untuk kanal merah, sedangkan hijau dan biru bernilai nol."],
+  ["Delapan bit satu byte","Satu byte terdiri atas 8 bit sehingga mampu menyimpan 256 kemungkinan nilai, yaitu 0 sampai 255."],
+  ["Oktal warisan komputer lama","Komputer generasi awal mengelompokkan bit bertiga, sehingga oktal populer sebelum heksadesimal mengambil alih."],
+  ["Berhitung sampai 1023 dengan jari","Bila tiap jari dianggap satu bit, sepuluh jari dapat mewakili bilangan biner 0 sampai 1023."],
+  ["Leibniz dan biner","Gottfried Leibniz menyusun sistem biner modern pada tahun 1703, jauh sebelum komputer elektronik pertama ada."],
+  ["Kilobyte yang bukan seribu","Dalam dunia komputer 1 KB sering bernilai 1024 byte karena 1024 adalah 2¹⁰, bukan angka bulat desimal."]
+];
+let faktaIdx=-1;
+function tampilFakta(){
+  let i; do{ i=Math.floor(Math.random()*FAKTA.length); }while(i===faktaIdx && FAKTA.length>1);
+  faktaIdx=i;
+  document.getElementById('fakta-judul').textContent=FAKTA[i][0];
+  document.getElementById('fakta-isi').textContent=FAKTA[i][1];
+  document.getElementById('lapis-popup').classList.add('tampil');
+  nada(660,990,0.18,'sine',0.13);
+}
+function tutupFakta(){ document.getElementById('lapis-popup').classList.remove('tampil'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') tutupFakta(); });
+
+/* ================= INISIALISASI ================= */
+bangunPG(); bangunBS(); bangunJodoh(); gambarSim(); perbaruiSkor();
+</script>
+</body>
+</html>
